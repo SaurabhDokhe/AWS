@@ -1,0 +1,482 @@
+Parameters:
+  ReportGenLambdaFunctionARN:
+    Description: "Passing Lambda Parameters from other Stack"
+    Type: String
+  GetAllUserProjTaskLambdaFunctionARN:
+    Description: "Passing Lambda Parameters from other Stack"
+    Type: String
+  ShowAllProjLambdaFunctionARN:
+    Description: "Passing Lambda Parameters from other Stack"
+    Type: String
+  CognitoUserCreateTableUpdateLambdaFunctionARN:
+    Description: "Passing Lambda Parameters from other Stack"
+    Type: String
+  EventNOtificationLambdaFunctionARN:
+    Description: "Passing Lambda Parameters from other Stack"
+    Type: String
+  UpdateDeleteUserinCognitoLambdaFunctionARN:
+    Description: "Passing Lambda Parameters from other Stack"
+    Type: String
+
+Resources:
+  #ReportGen 5.7
+  ReportGenAPI:
+    Type: "AWS::ApiGateway::RestApi"
+    Properties:
+      Name: "CreateReportGen"
+      Description: "Rest Api for ReportGen."
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+  ReportGenResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref ReportGenAPI
+      ParentId: !GetAtt
+        - ReportGenAPI
+        - RootResourceId
+      PathPart: ReportGen
+  ReportGenAPIGetMethod:
+      Type: "AWS::ApiGateway::Method"
+      Properties:
+        AuthorizationType: "None"
+        HttpMethod: "GET"
+        Integration:
+          IntegrationHttpMethod: "POST"
+          Type: "AWS_PROXY"
+          IntegrationResponses:
+            - StatusCode: 200
+          Uri: !Sub
+            - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateUserArn}/invocations"
+            - CreateUserArn: !Ref ReportGenLambdaFunctionARN
+        MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+        ResourceId: !Ref "ReportGenResource"
+        RestApiId: !Ref "ReportGenAPI"
+  ReportUserApiOptionMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "OPTIONS"
+      Integration:
+        Type: "MOCK"
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ''
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+      ResourceId: !Ref "ReportGenResource"
+      RestApiId: !Ref "ReportGenAPI"
+    DependsOn: ReportGenAPIGetMethod
+  ReportUserInvoke:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref ReportGenLambdaFunctionARN
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ReportGenAPI}/*/GET/ReportGen"
+  ReportGenDeployment:
+    DependsOn: ReportUserApiOptionMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref "ReportGenAPI"
+      Description: Deployment V1.0
+  
+  #get all user proj task : 
+  GetUserProjTaskAPI:
+    Type: "AWS::ApiGateway::RestApi"
+    Properties:
+      Name: "getuserTrojTask"
+      Description: "Rest Api for User proj task."
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+  GetUserProjTaskResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref GetUserProjTaskAPI
+      ParentId: !GetAtt
+        - GetUserProjTaskAPI
+        - RootResourceId
+      PathPart: GetUserProjTask
+  GetUserProjTaskGetMethod:
+      Type: "AWS::ApiGateway::Method"
+      Properties:
+        AuthorizationType: "None"
+        HttpMethod: "GET"
+        Integration:
+          IntegrationHttpMethod: "POST"
+          Type: "AWS_PROXY"
+          IntegrationResponses:
+            - StatusCode: 200
+          Uri: !Sub
+            - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateUserArn}/invocations"
+            - CreateUserArn: !Ref GetAllUserProjTaskLambdaFunctionARN
+        MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+        ResourceId: !Ref "GetUserProjTaskResource"
+        RestApiId: !Ref "GetUserProjTaskAPI"
+  GetUserProjTaskOptionMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "OPTIONS"
+      Integration:
+        Type: "MOCK"
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ''
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+      ResourceId: !Ref "GetUserProjTaskResource"
+      RestApiId: !Ref "GetUserProjTaskAPI"
+    DependsOn: GetUserProjTaskGetMethod
+  GetUserProjTaskInvoke:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref GetAllUserProjTaskLambdaFunctionARN
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GetUserProjTaskAPI}/*/GET/GetUserProjTask"
+  GetUserProjTaskDeployment:
+    DependsOn: GetUserProjTaskOptionMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref "GetUserProjTaskAPI"
+      Description: Deployment V1.0
+
+  #Show all project 5.7
+  ShowAllProjAPI:
+    Type: "AWS::ApiGateway::RestApi"
+    Properties:
+      Name: "ShowAllProj"
+      Description: "Post user details."
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+  ShowAllProjResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref ShowAllProjAPI
+      ParentId: !GetAtt
+        - ShowAllProjAPI
+        - RootResourceId
+      PathPart: ShowAllProj
+  ShowAllProjAPIGetMethod:
+      Type: "AWS::ApiGateway::Method"
+      Properties:
+        AuthorizationType: "None"
+        HttpMethod: "POST"
+        Integration:
+          IntegrationHttpMethod: "POST"
+          Type: "AWS_PROXY"
+          IntegrationResponses:
+            - StatusCode: 200
+          Uri: !Sub
+            - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateUserArn}/invocations"
+            - CreateUserArn: !Ref ShowAllProjLambdaFunctionARN
+        MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+        ResourceId: !Ref "ShowAllProjResource"
+        RestApiId: !Ref "ShowAllProjAPI"
+  ShowAllProjOptionMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "OPTIONS"
+      Integration:
+        Type: "MOCK"
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ''
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+      ResourceId: !Ref "ShowAllProjResource"
+      RestApiId: !Ref "ShowAllProjAPI"
+    DependsOn: ShowAllProjAPIGetMethod
+  ShowAllProjInvoke:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref ShowAllProjLambdaFunctionARN
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ShowAllProjAPI}/*/POST/ShowAllProj"
+  ShowAllProjDeployment:
+    DependsOn: ShowAllProjOptionMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref "ShowAllProjAPI"
+      Description: Deployment V1.0
+
+  #Event Notification
+  EventNOtificationLambdaFunctionAPI:
+    Type: "AWS::ApiGateway::RestApi"
+    Properties:
+      Name: "EventNOtificationLambdaFunction"
+      Description: "Event Notification S3."
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+  EventNOtificationLambdaFunctionResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref EventNOtificationLambdaFunctionAPI
+      ParentId: !GetAtt
+        - EventNOtificationLambdaFunctionAPI
+        - RootResourceId
+      PathPart: EventNOtificationLambdaFunction
+  EventNOtificationLambdaFunctionAPIGetMethod:
+      Type: "AWS::ApiGateway::Method"
+      Properties:
+        AuthorizationType: "None"
+        HttpMethod: "GET"
+        Integration:
+          IntegrationHttpMethod: "POST"
+          Type: "AWS_PROXY"
+          IntegrationResponses:
+            - StatusCode: 200
+          Uri: !Sub
+            - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateUserArn}/invocations"
+            - CreateUserArn: !Ref EventNOtificationLambdaFunctionARN
+        MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+        ResourceId: !Ref "EventNOtificationLambdaFunctionResource"
+        RestApiId: !Ref "EventNOtificationLambdaFunctionAPI"
+  EventNOtificationOptionMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "OPTIONS"
+      Integration:
+        Type: "MOCK"
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ''
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+      ResourceId: !Ref "EventNOtificationLambdaFunctionResource"
+      RestApiId: !Ref "EventNOtificationLambdaFunctionAPI"
+    DependsOn: EventNOtificationLambdaFunctionAPIGetMethod
+  EventNOtificationInvoke:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref EventNOtificationLambdaFunctionARN
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${EventNOtificationLambdaFunctionAPI}/*/GET/EventNOtificationLambdaFunction"
+  EventNOtificationLambdaFunctionDeployment:
+    DependsOn: EventNOtificationOptionMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref "EventNOtificationLambdaFunctionAPI"
+      Description: Deployment V1.0
+
+  #Cognito User Create Table Update
+  CognitoUserCreateTableUpdateAPI:
+    Type: "AWS::ApiGateway::RestApi"
+    Properties:
+      Name: "CognitoUserCreateTableUpdate"
+      Description: "Post user details."
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+  CognitoUserCreateTableUpdateResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref CognitoUserCreateTableUpdateAPI
+      ParentId: !GetAtt
+        - CognitoUserCreateTableUpdateAPI
+        - RootResourceId
+      PathPart: CognitoUserCreateTableUpdate
+  CognitoUserCreateTableUpdateGetMethod:
+      Type: "AWS::ApiGateway::Method"
+      Properties:
+        AuthorizationType: "None"
+        HttpMethod: "PUT"
+        Integration:
+          IntegrationHttpMethod: "POST"
+          Type: "AWS_PROXY"
+          IntegrationResponses:
+            - StatusCode: 200
+          Uri: !Sub
+            - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateUserArn}/invocations"
+            - CreateUserArn: !Ref CognitoUserCreateTableUpdateLambdaFunctionARN
+        MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+        ResourceId: !Ref "CognitoUserCreateTableUpdateResource"
+        RestApiId: !Ref "CognitoUserCreateTableUpdateAPI"
+  CognitoUserCreateTableUpdateOptionMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "OPTIONS"
+      Integration:
+        Type: "MOCK"
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ''
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+      ResourceId: !Ref "CognitoUserCreateTableUpdateResource"
+      RestApiId: !Ref "CognitoUserCreateTableUpdateAPI"
+    DependsOn: CognitoUserCreateTableUpdateGetMethod
+  CognitoUserCreateTableUpdateInvoke:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref CognitoUserCreateTableUpdateLambdaFunctionARN
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${CognitoUserCreateTableUpdateAPI}/*/PUT/CognitoUserCreateTableUpdate"
+  CognitoUserCreateTableUpdateDeployment:
+    DependsOn: CognitoUserCreateTableUpdateOptionMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref "CognitoUserCreateTableUpdateAPI"
+      Description: Deployment V1.0
+
+  #Update Delete User from Cognito
+  UpdateDeleteUserinCognitoAPI:
+    Type: "AWS::ApiGateway::RestApi"
+    Properties:
+      Name: "UpdateDeleteUserinCognito"
+      Description: "Post user details."
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+  UpdateDeleteUserinCognitoResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref UpdateDeleteUserinCognitoAPI
+      ParentId: !GetAtt
+        - UpdateDeleteUserinCognitoAPI
+        - RootResourceId
+      PathPart: UpdateDeleteUserinCognito
+  UpdateDeleteUserinCognitoAPIGetMethod:
+      Type: "AWS::ApiGateway::Method"
+      Properties:
+        AuthorizationType: "None"
+        HttpMethod: "POST"
+        Integration:
+          IntegrationHttpMethod: "POST"
+          Type: "AWS_PROXY"
+          IntegrationResponses:
+            - StatusCode: 200
+          Uri: !Sub
+            - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateUserArn}/invocations"
+            - CreateUserArn: !Ref UpdateDeleteUserinCognitoLambdaFunctionARN
+        MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+        ResourceId: !Ref "UpdateDeleteUserinCognitoResource"
+        RestApiId: !Ref "UpdateDeleteUserinCognitoAPI"
+  UpdateDeleteUserinCognitoOptionMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "OPTIONS"
+      Integration:
+        Type: "MOCK"
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ''
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+      ResourceId: !Ref "UpdateDeleteUserinCognitoResource"
+      RestApiId: !Ref "UpdateDeleteUserinCognitoAPI"
+    DependsOn: UpdateDeleteUserinCognitoAPIGetMethod
+  UpdateDeleteUserinCognitoInvoke:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref UpdateDeleteUserinCognitoLambdaFunctionARN
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${UpdateDeleteUserinCognitoAPI}/*/Post/UpdateDeleteUserinCognito"
+  UpdateDeleteUserinCognitoDeployment:
+    DependsOn: UpdateDeleteUserinCognitoOptionMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref "UpdateDeleteUserinCognitoAPI"
+      Description: Deployment V1.0

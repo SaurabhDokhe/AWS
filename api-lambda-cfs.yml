@@ -1,0 +1,81 @@
+Resources:
+  WsCreateUserApiG:
+    Type: "AWS::ApiGateway::RestApi"
+    Properties:
+      Name: "WsCreateUser"
+      Description: "Rest Api for user registration process for the Ws APP."
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+  WsCreateUserResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref WsCreateUserApiG
+      ParentId: !GetAtt
+        - WsCreateUserApiG
+        - RootResourceId
+      PathPart: CreateUser
+
+WsCreateUserApiGetMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      AuthorizationType: "None"
+      # AuthorizerId: !Ref WsCreateUserApiAuthorizer
+      HttpMethod: "GET"
+      Integration:
+        IntegrationHttpMethod: "POST"
+        Type: "AWS_PROXY"
+        IntegrationResponses:
+          -
+            StatusCode: 200
+        Uri: !Sub
+          - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WsCreateUserArn}/invocations"
+          - WsCreateUserArn: !Ref WsCreateUserARN
+      MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+      ResourceId: !Ref "WsCreateUserResource"
+      RestApiId: !Ref "WsCreateUserApiG"
+  WsCreateUserApiOptionMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "OPTIONS"
+      Integration:
+        Type: "MOCK"
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ''
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+      ResourceId: !Ref "WsCreateUserResource"
+      RestApiId: !Ref "WsCreateUserApiG"
+    DependsOn: WsCreateUserApiGetMethod
+  WsCreateUserInvoke:
+   Type: "AWS::Lambda::Permission"
+   Properties:
+     Action: "lambda:InvokeFunction"
+     FunctionName: !Ref WsCreateUserARN
+     Principal: "apigateway.amazonaws.com"
+     SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WsCreateUserApiG}/*/GET/CreateUser"
+  WsCreateUserDeployment:
+    DependsOn: WsCreateUserApiOptionMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref "WsCreateUserApiG"
+      Description: Deployment V1.0
+      StageName: !Ref "apiGatewayStageName"
+  

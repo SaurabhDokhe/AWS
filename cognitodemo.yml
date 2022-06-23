@@ -1,0 +1,16 @@
+Resources:
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: "cf_demo_qwertyui"
+      AliasAttributes:
+        - phone_number
+        - email
+        - preferred_username
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: true

@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+  License: Apache-2.0
+Description: 'Module 5 final task'
+
+Resources:
+  LambdaStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://saurabhd-test.s3.amazonaws.com/module5/lambda-module5.yml"
+      
+  ApiGStack:
+    DependsOn: LambdaStack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://saurabhd-test.s3.amazonaws.com/module5/api-Module5.yml"
+      Parameters:
+        ReportGenLambdaFunctionARN: !GetAtt "LambdaStack.Outputs.ReportGenLambdaFunctionARN"
+        GetAllUserProjTaskLambdaFunctionARN: !GetAtt "LambdaStack.Outputs.GetAllUserProjTaskLambdaFunctionARN"
+        ShowAllProjLambdaFunctionARN: !GetAtt "LambdaStack.Outputs.ShowAllProjLambdaFunctionARN"
+        CognitoUserCreateTableUpdateLambdaFunctionARN: !GetAtt "LambdaStack.Outputs.CognitoUserCreateTableUpdateLambdaFunctionARN"
+        EventNOtificationLambdaFunctionARN: !GetAtt "LambdaStack.Outputs.EventNOtificationLambdaFunctionARN"
+        UpdateDeleteUserinCognitoLambdaFunctionARN: !GetAtt "LambdaStack.Outputs.UpdateDeleteUserinCognitoLambdaFunctionARN"

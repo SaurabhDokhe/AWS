@@ -1,0 +1,86 @@
+Parameters:
+  CreateUserARN:
+    Description: "Passing Lambda Parameters from other Stack"
+    Type: String
+  apiGatewayStageName:
+    Type: "String"
+    AllowedPattern: "^[a-z0-9]+$"
+    Default: "v1"
+Resources:
+  CreateUserAPI:
+    Type: "AWS::ApiGateway::RestApi"
+    Properties:
+      Name: "CreateUserPost"
+      Description: "Rest Api for user creation."
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+  CreateUserResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref CreateUserAPI
+      ParentId: !GetAtt
+        - CreateUserAPI
+        - RootResourceId
+      PathPart: CreateUser
+  CreateUserAPIGetMethod:
+      Type: "AWS::ApiGateway::Method"
+      Properties:
+        AuthorizationType: "None"
+        HttpMethod: "POST"
+        Integration:
+          IntegrationHttpMethod: "POST"
+          Type: "AWS_PROXY"
+          IntegrationResponses:
+            - StatusCode: 200
+          Uri: !Sub
+            - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateUserArn}/invocations"
+            - CreateUserArn: !Ref CreateUserARN
+        MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+        ResourceId: !Ref "CreateUserResource"
+        RestApiId: !Ref "CreateUserAPI"
+  CreateUserApiOptionMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "OPTIONS"
+      Integration:
+        Type: "MOCK"
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ''
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - ResponseModels: { "application/json": "Empty" }
+          StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+      ResourceId: !Ref "CreateUserResource"
+      RestApiId: !Ref "CreateUserAPI"
+    DependsOn: CreateUserAPIGetMethod
+  CreateUserInvoke:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref CreateUserARN
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${CreateUserAPI}/*/POST/CreateUser"
+  CreateUserDeployment:
+    DependsOn: CreateUserApiOptionMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref "CreateUserAPI"
+      Description: Deployment V1.0
+      StageName: !Ref "apiGatewayStageName"
+        
